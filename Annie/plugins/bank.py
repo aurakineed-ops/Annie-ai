@@ -77,7 +77,7 @@ async def bank_deposit(update: Update, user, args):
     elif isinstance(parsed_amount, int):
         amount = parsed_amount
     else:
-        return await smart_reply(update, f"{pe('cross')} {stylize_text('Invalid amount! Use a number or all.')}"
+        return await smart_reply(update, f"{pe('cross')} {stylize_text('Invalid amount! Use a number or all.')}")
 
     if amount <= 0:
         return await smart_reply(update, f"{pe('cross')} {stylize_text('Amount must be positive!')}")
@@ -114,7 +114,7 @@ async def bank_withdraw(update: Update, user, args):
     elif isinstance(parsed_amount, int):
         amount = parsed_amount
     else:
-        return await smart_reply(update, f"{pe('cross')} {stylize_text('Invalid amount! Use a number or all.')}"
+        return await smart_reply(update, f"{pe('cross')} {stylize_text('Invalid amount! Use a number or all.')}")
 
     if amount <= 0:
         return await smart_reply(update, f"{pe('cross')} {stylize_text('Amount must be positive!')}")
