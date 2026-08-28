@@ -104,7 +104,7 @@ SESSION_STRING = os.getenv("SESSION_STRING", "").strip()
 # ===============================
 # GAME CONSTANTS
 # ===============================
-BOT_NAME = "🌸 ᴀɴɴɪᴇ ×͜࿐"
+BOT_NAME = "🌸 ʜᴇᴇʀɪʏᴇ ×͜࿐"
 
 REVIVE_COST = 500
 PROTECT_1D_COST = 1000
