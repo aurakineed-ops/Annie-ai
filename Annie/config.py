@@ -47,7 +47,7 @@ START_IMG_URL = os.getenv(
 
 HELP_IMG_URL = os.getenv(
     "HELP_IMG_URL",
-    "https://files.catbox.moe/fooiem.jpg"
+    "https://iili.io/nHTjpVI.jpg
 )
 
 WELCOME_IMG_URL = os.getenv(
@@ -67,7 +67,7 @@ SUPPORT_CHANNEL = os.getenv(
 
 OWNER_LINK = os.getenv(
     "OWNER_LINK",
-    "https://t.me/RAJOWNERX1"
+    "https://t.me/flirt_x"
 )
 
 # ===============================
