@@ -47,7 +47,7 @@ START_IMG_URL = os.getenv(
 
 HELP_IMG_URL = os.getenv(
     "HELP_IMG_URL",
-    "https://iili.io/nHTjpVI.jpg
+    "https://iili.io/nHTjpVI.jpg"
 )
 
 WELCOME_IMG_URL = os.getenv(
