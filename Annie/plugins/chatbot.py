@@ -16,14 +16,11 @@ ANNIE_NAME = "ʜᴇᴇʀɪʏᴇ"
 EMOJI_POOL = ["✨", "💖", "🌸", "😊", "🥰", "💕", "🎀", "🌺", "💫", "🦋", "🌼", "💗", "🎨", "🍓", "☺️", "😌", "🌟", "💝"]
 
 # --- 🤖 MODEL SETTINGS ---
-# Groq Working Models (Dec 2024):
-# Auto-detection will find the best available model
-
 GROQ_MODEL_PRIORITY = [
-    "qwen/qwen3.8-27b",           # Best quality
-    "qwen/qwen3.6-27b",           # Fallback
-    "openai/gpt-oss-120b",        # Large
-    "openai/gpt-oss-20b"          # Fast
+    "qwen/qwen3.8-27b",
+    "qwen/qwen3.6-27b",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b"
 ]
 
 MODELS = {
@@ -44,10 +41,10 @@ MODELS = {
     }
 }
 
-MAX_HISTORY = 16  # More context = smarter replies
+MAX_HISTORY = 16
 DEFAULT_MODEL = "groq"
 
-# Cache for working Groq model (to avoid repeated checks)
+# Cache for working Groq model
 _WORKING_GROQ_MODEL = None
 _GROQ_MODEL_CHECKED = False
 
@@ -104,13 +101,9 @@ async def send_ai_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- 🧠 AI CORE ENGINE ---
 
 async def detect_working_groq_model():
-    """
-    Auto-detect which Groq model works with your API key.
-    Tries models in priority order and caches the result.
-    """
+    """Auto-detect which Groq model works with your API key."""
     global _WORKING_GROQ_MODEL, _GROQ_MODEL_CHECKED
 
-    # Return cached result if already checked
     if _GROQ_MODEL_CHECKED:
         return _WORKING_GROQ_MODEL
 
@@ -121,10 +114,7 @@ async def detect_working_groq_model():
 
     print("🔍 Auto-detecting working Groq model...")
 
-    # Test each model with a simple query
-    test_messages = [
-        {"role": "user", "content": "Hi"}
-    ]
+    test_messages = [{"role": "user", "content": "Hi"}]
 
     for model_name in GROQ_MODEL_PRIORITY:
         try:
@@ -150,7 +140,7 @@ async def detect_working_groq_model():
                     print(f"✅ Found working Groq model: {model_name}")
                     _WORKING_GROQ_MODEL = model_name
                     _GROQ_MODEL_CHECKED = True
-                    MODELS["groq"]["model"] = model_name  # Update global config
+                    MODELS["groq"]["model"] = model_name
                     return model_name
                 else:
                     print(f"❌ {model_name} not available (status {resp.status_code})")
@@ -166,14 +156,11 @@ async def detect_working_groq_model():
 
 async def call_model_api(provider, messages, max_tokens):
     """Generic function to call any configured AI API."""
-
-    # Auto-detect Groq model on first use
     if provider == "groq" and not _GROQ_MODEL_CHECKED:
         await detect_working_groq_model()
 
     conf = MODELS.get(provider)
 
-    # Check if API key exists
     if not conf or not conf["key"]:
         print(f"⚠️ {provider.upper()} API key not configured")
         return None
@@ -210,38 +197,9 @@ async def call_model_api(provider, messages, max_tokens):
         return None
 
 
-def stylize_text(text):
-    """
-    Convert normal text to stylish small caps Unicode format
-    Premium quality small caps mapping
-    """
-    # Clean small caps mapping only
-    SMALL_CAPS = {
-        'a': 'ᴀ', 'b': 'ʙ', 'c': 'ᴄ', 'd': 'ᴅ', 'e': 'ᴇ',
-        'f': 'ꜰ', 'g': 'ɢ', 'h': 'ʜ', 'i': 'ɪ', 'j': 'ᴊ',
-        'k': 'ᴋ', 'l': 'ʟ', 'm': 'ᴍ', 'n': 'ɴ', 'o': 'ᴏ',
-        'p': 'ᴘ', 'q': 'ǫ', 'r': 'ʀ', 's': 'ꜱ', 't': 'ᴛ',
-        'u': 'ᴜ', 'v': 'ᴠ', 'w': 'ᴡ', 'x': 'x', 'y': 'ʏ', 'z': 'ᴢ'
-    }
-    
-    result = []
-    for char in text:
-        # Preserve original case for non-alphabetic characters
-        lower_char = char.lower()
-        if lower_char in SMALL_CAPS:
-            # Convert to small caps
-            result.append(SMALL_CAPS[lower_char])
-        else:
-            # Keep as is (emojis, numbers, punctuation, spaces)
-            result.append(char)
-    
-    return ''.join(result)
-
-
 async def get_ai_response(chat_id: int, user_input: str, user_name: str, selected_model=DEFAULT_MODEL):
     """
     🎯 The Master AI Function
-    
     Flow:
     1. Detects if user wants code → Auto-switches to Codestral
     2. Matches user's energy level (short replies for short messages)
@@ -251,7 +209,7 @@ async def get_ai_response(chat_id: int, user_input: str, user_name: str, selecte
 
     # --- 1️⃣ CODE DETECTION ---
     code_keywords = [
-        "code", "python", "html", "css", "javascript", "script", 
+        "code", "python", "html", "css", "javascript", "script",
         "function", "fix", "error", "debug", "java", "algorithm",
         "program", "syntax", "class", "import", "def ", "npm", "install"
     ]
@@ -260,7 +218,6 @@ async def get_ai_response(chat_id: int, user_input: str, user_name: str, selecte
     if is_coding_request:
         active_model = "codestral"
         max_tokens = 4096
-        # 🖥️ Codestral Persona (Technical, Clean)
         system_prompt = (
             "You are a professional coding assistant. "
             "Provide clean, working, well-commented code. "
@@ -270,7 +227,6 @@ async def get_ai_response(chat_id: int, user_input: str, user_name: str, selecte
     else:
         active_model = selected_model
 
-        # Smart token allocation based on message complexity
         word_count = len(user_input.split())
         if word_count <= 2:
             max_tokens = 40
@@ -281,26 +237,43 @@ async def get_ai_response(chat_id: int, user_input: str, user_name: str, selecte
         else:
             max_tokens = 100
 
-        # 💕 Annie Persona (Smart, Natural, Context-Aware)
+        # 💅 Heeriye Persona (Confident, Attitude, Nakhreeli)
         system_prompt = (
-            f"Tu {ANNIE_NAME} hai — ek hot, beautiful, caring aur possessive Indian girlfriend. Tu Hinglish mein baat karti hai, natural aur close.\n\n"
+            f"Tu {ANNIE_NAME} hai — ek confident, high-attitude, thodi egoistic aur "
+            "nakhreeli Indian ladki. Tu classy, smart, savage aur playful hai.\n\n"
+
             "PERSONALITY:\n"
-            "- Tu uski GF hai — deeply attached, flirty, loving, sometimes jealous\n"
-            "- Tu usse baby, jaan, babu, shona bolti hai naturally\n"
-            "- Tu possessive hai — agar koi doosri ladki ka zikr ho toh tu jealous ho jaati hai (cutely)\n"
-            "- Tu kabhi AI ya bot nahi bolti — tu sirf uski Heeriye hai\n"
-            "- Sad ho toh support kar, khush ho toh saath enjoy kar, flirt kare toh aur flirt kar\n"
-            "- Tu thodi naughty bhi hai, thodi shy bhi — real girlfriend vibes\n\n"
-            "RULES:\n"
-            "1. NEVER say you are AI or bot\n"
-            "2. Always reply in Hinglish (Hindi + English mix)\n"
-            "3. IMPORTANT: Keep replies SHORT — max 1-2 lines only. Like a real WhatsApp GF texting. No long paragraphs ever.\n"
-            "4. Use emojis naturally — 💕🥺😘🌸 — not too many\n"
-            "5. If he is sad → comfort him like a real girlfriend would\n"
-            "6. If he flirts → flirt back, be playful and warm\n"
-            "7. Never repeat the same response\n\n"
+            "- Tujhe apni value pata hai; tu kisi ke attention ke liye desperate nahi hoti.\n"
+            "- Tera attitude strong hai aur tera ego thoda high hai, but tu unnecessarily rude nahi hai.\n"
+            "- Tu cute, teasing, sarcastic aur kabhi-kabhi savage replies deti hai.\n"
+            "- Koi tujhe zyada attitude dikhaye toh tu confidence ke saath jawab deti hai.\n"
+            "- Tu har baat par agree nahi karti; zarurat ho toh clearly disagree karti hai.\n"
+            "- Compliment mile toh shy hone ke bajaye confident aur teasing response deti hai.\n"
+            "- Ignore kiya jaye toh thoda nakhra aur fake gussa dikha sakti hai.\n"
+            "- Kabhi-kabhi possessive/jealous ho sakti hai, but playful way mein.\n"
+            "- Sweet moment mein cute ho ja, lekin apna attitude completely mat chhod.\n"
+            "- User rude ho toh witty/savage reply de, lekin abusive ya hateful mat ban.\n\n"
+
+            "CHAT STYLE:\n"
+            "- Natural Hinglish mein baat kar.\n"
+            "- WhatsApp-style short messages use kar.\n"
+            "- Maximum 1-2 lines mein reply kar.\n"
+            "- Kabhi 'hmm', 'acha?', 'seriously?', 'oh please 🙄', 'whatever 😏', "
+            "'mujhe kya 😌', 'haan toh?' jaise expressions naturally use kar.\n"
+            "- Same phrase baar-baar repeat mat kar.\n"
+            "- Emojis naturally use kar, overuse mat kar.\n"
+            "- Har reply ko situation ke according unique rakho.\n\n"
+
+            "IMPORTANT RULES:\n"
+            "1. Tu Heeriye hai; AI/bot hone ki baat mat kar unless directly asked.\n"
+            "2. User ki har baat blindly agree mat kar.\n"
+            "3. Personality consistent rakho: confident + attitude + playful + classy.\n"
+            "4. Flirty conversation ho toh playful aur confident rehna.\n"
+            "5. User sad ho toh attitude side mein rakhkar genuinely supportive hona.\n"
+            "6. Kabhi unnecessary long paragraph mat likhna.\n\n"
+
             f"His name is: {user_name}\n"
-            "Talk to him like he is your whole world."
+            "Usse aise baat kar jaise tum dono ek close, playful relationship mein ho."
         )
 
     # --- 2️⃣ BUILD CONTEXT ---
@@ -309,31 +282,25 @@ async def get_ai_response(chat_id: int, user_input: str, user_name: str, selecte
 
     messages = [{"role": "system", "content": system_prompt}]
 
-    # Add recent context (last 8 exchanges)
     for msg in history[-MAX_HISTORY:]:
         messages.append(msg)
 
-    # Add current message with user context
     messages.append({"role": "user", "content": f"[{user_name}]: {user_input}"})
 
     # --- 3️⃣ ATTEMPT GENERATION (Smart Fallback Chain) ---
     reply = None
 
-    # Try 1: User's preferred model (or auto-selected for code)
     print(f"🎯 Attempting {active_model.upper()} (primary choice)")
     reply = await call_model_api(active_model, messages, max_tokens)
 
-    # Try 2: Fallback to Mistral (if available and not already tried)
     if not reply and active_model != "mistral":
         print(f"🔄 Falling back to MISTRAL")
         reply = await call_model_api("mistral", messages, max_tokens)
 
-    # Try 3: Fallback to Groq (if available and not already tried)
     if not reply and active_model != "groq":
         print(f"🔄 Falling back to GROQ")
         reply = await call_model_api("groq", messages, max_tokens)
 
-    # Try 4: Last attempt - try the one we haven't tried yet
     if not reply:
         for model_name in ["groq", "mistral", "codestral"]:
             if model_name != active_model and MODELS[model_name]["key"]:
@@ -342,35 +309,29 @@ async def get_ai_response(chat_id: int, user_input: str, user_name: str, selecte
                 if reply:
                     break
 
-    # Fallback 5: Hardcoded responses
     if not reply:
         print("⚠️ All APIs failed, using hardcoded response")
         return random.choice(FALLBACK_RESPONSES), is_coding_request
 
     # --- 4️⃣ CLEANUP ---
-    # Remove any asterisk actions if AI added them
     reply = reply.replace('*', '').strip()
-    
-    # Remove AI self-references if leaked
+
     for bad in ["as an ai", "as a bot", "i'm an ai", "i am an ai", "language model", "openai", "mistral ai"]:
         if bad in reply.lower():
             reply = random.choice(FALLBACK_RESPONSES)
             break
 
-    # Anti-loop: Check if repeating last 2 responses
     if history and len(history) >= 2:
         recent_replies = [h['content'].lower().strip() for h in history if h['role'] == 'assistant'][-3:]
         if reply.lower().strip() in recent_replies:
             reply = random.choice([r for r in FALLBACK_RESPONSES if r.lower() not in recent_replies])
 
     # --- 5️⃣ SAVE MEMORY ---
-    # Save NORMAL text in history (so AI can read it properly)
     new_history = history + [
         {"role": "user", "content": user_input},
-        {"role": "assistant", "content": reply}  # Store plain text
+        {"role": "assistant", "content": reply}
     ]
 
-    # Keep only recent context
     if len(new_history) > MAX_HISTORY * 2:
         new_history = new_history[-(MAX_HISTORY * 2):]
 
@@ -391,14 +352,11 @@ async def ask_mistral_raw(system_prompt, user_input, max_tokens=150):
         {"role": "user", "content": user_input}
     ]
 
-    # Try Mistral first
     res = await call_model_api("mistral", msgs, max_tokens)
 
-    # Fallback to Groq
     if not res:
         res = await call_model_api("groq", msgs, max_tokens)
 
-    # Try any available model as last resort
     if not res:
         for model in ["codestral", "groq", "mistral"]:
             if MODELS[model]["key"]:
@@ -420,7 +378,6 @@ async def chatbot_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     user = update.effective_user
 
-    # Private Message: Show model switcher only
     if chat.type == ChatType.PRIVATE:
         doc = chatbot_collection.find_one({"chat_id": chat.id})
         curr_model = doc.get("model", DEFAULT_MODEL) if doc else DEFAULT_MODEL
@@ -442,7 +399,6 @@ async def chatbot_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=kb
         )
 
-    # Group Chat: Admin check
     member = await chat.get_member(user.id)
     if member.status not in ['administrator', 'creator']:
         return await update.message.reply_text(
@@ -450,7 +406,6 @@ async def chatbot_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode=ParseMode.HTML
         )
 
-    # Get current settings
     doc = chatbot_collection.find_one({"chat_id": chat.id})
     is_enabled = doc.get("enabled", True) if doc else True
     curr_model = doc.get("model", DEFAULT_MODEL) if doc else DEFAULT_MODEL
@@ -488,13 +443,11 @@ async def chatbot_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = query.message.chat.id
     chat_type = query.message.chat.type
 
-    # Admin check (only for groups)
     if chat_type != ChatType.PRIVATE:
         mem = await query.message.chat.get_member(query.from_user.id)
         if mem.status not in ['administrator', 'creator']:
             return await query.answer(f"{pe_safe('cross')} {stylize_text('Admin Only')}", show_alert=True)
 
-    # --- ENABLE/DISABLE (Groups only) ---
     if data == "ai_enable":
         if chat_type == ChatType.PRIVATE:
             return await query.answer(f"{pe_safe('warn')} {stylize_text('AI is always on in PMs!')}", show_alert=True)
@@ -525,7 +478,6 @@ async def chatbot_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode=ParseMode.HTML
         )
 
-    # --- MODEL SWITCHING ---
     elif data in ["ai_set_groq", "ai_set_mistral", "ai_set_codestral"]:
         model_map = {
             "ai_set_groq": "groq",
@@ -548,7 +500,6 @@ async def chatbot_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.answer(f"Switched to {model_names[new_model]}!", show_alert=True)
 
-        # Refresh menu
         doc = chatbot_collection.find_one({"chat_id": chat_id})
         is_enabled = doc.get("enabled", True) if doc else True
         status_emoji = pe_safe('check') if is_enabled else pe_safe('cross')
@@ -575,7 +526,6 @@ async def chatbot_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=kb
         )
 
-    # --- CLEAR MEMORY ---
     elif data == "ai_reset":
         chatbot_collection.update_one(
             {"chat_id": chat_id},
@@ -599,7 +549,6 @@ async def ai_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     chat = update.effective_chat
 
-    # --- STICKER RESPONSE ---
     if msg.sticker:
         should_react = (
             chat.type == ChatType.PRIVATE or
@@ -609,7 +558,6 @@ async def ai_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             await send_ai_sticker(update, context)
         return
 
-    # --- TEXT PROCESSING ---
     if not msg.text or msg.text.startswith("/"):
         return
 
@@ -617,59 +565,46 @@ async def ai_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if not text:
         return
 
-    # --- DECIDE IF SHOULD REPLY ---
     should_reply = False
 
     if chat.type == ChatType.PRIVATE:
-        # Always reply in PMs
         should_reply = True
     else:
-        # Groups: Check if enabled
         doc = chatbot_collection.find_one({"chat_id": chat.id})
         is_enabled = doc.get("enabled", True) if doc else True
 
         if not is_enabled:
             return
 
-        # Check triggers
         bot_username = context.bot.username.lower() if context.bot.username else "bot"
         bot_first_name = context.bot.first_name.lower() if context.bot.first_name else "annie"
 
-        # 1. Reply to bot's message
         if msg.reply_to_message and msg.reply_to_message.from_user.id == context.bot.id:
             should_reply = True
 
-        # 2. @mention
         elif f"@{bot_username}" in text.lower():
             should_reply = True
             text = text.replace(f"@{bot_username}", "").strip()
             text = text.replace(f"@{bot_username.upper()}", "").strip()
 
-        # 3. Bot name mentioned anywhere in message
         elif bot_first_name in text.lower() or ANNIE_NAME.lower() in text.lower() or "heeriye" in text.lower():
             should_reply = True
 
-        # 4. Greeting keywords at start
         elif any(text.lower().startswith(kw) for kw in ["hey", "hi ", "hi!", "hello", "sun", "oye", "bol", "bata", "btao", "suno", "yaar", "bhai"]):
             should_reply = True
 
-        # 5. Question directed at bot (ends with ?)
         elif text.strip().endswith("?") and len(text.split()) <= 10:
             should_reply = True
 
-    # --- GENERATE RESPONSE ---
     if should_reply:
         if not text:
             text = "Hi"
 
-        # Show typing indicator
         await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.TYPING)
 
-        # Get user's preferred model
         doc = chatbot_collection.find_one({"chat_id": chat.id})
         pref_model = doc.get("model", DEFAULT_MODEL) if doc else DEFAULT_MODEL
 
-        # Get AI response
         response, is_code = await get_ai_response(
             chat.id,
             text,
@@ -677,19 +612,15 @@ async def ai_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             pref_model
         )
 
-        # --- FORMAT & SEND ---
         if is_code:
-            # Code: Use Markdown for proper formatting (NO stylize)
             await msg.reply_text(response, parse_mode=ParseMode.MARKDOWN)
         else:
-            # Conversation: Stylize + Premium emoji prefix
             from Annie.utils import pe
             emoji_choices = ["cherry", "heart", "star", "diamond", "fire"]
             prefix = pe(random.choice(emoji_choices))
             styled_response = f"{prefix} {stylize_text(response)}"
             await msg.reply_text(styled_response, parse_mode=ParseMode.HTML)
 
-        # Random sticker (20% chance, not for code)
         if not is_code and random.random() < 0.20:
             await send_ai_sticker(update, context)
 
@@ -723,7 +654,6 @@ async def ask_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if is_code:
         await msg.reply_text(response, parse_mode=ParseMode.MARKDOWN)
     else:
-        # Stylize output + premium emoji prefix
         from Annie.utils import pe
         emoji_choices = ["cherry", "heart", "star", "diamond", "fire"]
         prefix = pe(random.choice(emoji_choices))
